@@ -13,6 +13,11 @@
                         name="cancel" class="oe_link"/>
                     
                 </header>
+                <sheet>
+                <div class="alert alert-success alert-dismissible" invisible="not context.get('show_message', False)">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
+            Connection Succesfull!!!
+        </div>
                 <separator string="Insurance Connect Configuration"/>
                 <group string="Credentials">
                     <div>
@@ -93,6 +98,7 @@
                 <div>
                     <span>(*) This configuration is related to the company you're logged into.</span>
                 </div>
+                </sheet>
             </form>
         </field>
     </record>

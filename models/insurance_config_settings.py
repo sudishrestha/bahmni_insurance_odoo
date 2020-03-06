@@ -129,7 +129,17 @@ class insurance_config_settings(models.TransientModel):
         _logger.info("model url->%s", self.base_url)
 
         response = self.env['insurance.connect'].authenticate(self.username, self.password, self.base_url)
-        
+        if response:
+            raise UserError(response)
+        else:
+            return {
+            "type": "ir.actions.act_window",
+            "res_model": "insurance.config.settings",
+            "views": [[False, "form"]],
+            "res_id": self.id,
+            "target": "main",
+            "context": {'show_message': True},
+            }
     @api.multi
     def set_params(self):
         _logger.info("Inside set_params")
