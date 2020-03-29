@@ -7,3 +7,4 @@ import insurance_claim
 import order_save_service
 import res_company
 import account_invoice
+import insurance_disease_code

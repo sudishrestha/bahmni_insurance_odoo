@@ -31,6 +31,7 @@
         'views/insurance_views.xml',
         'views/quotation_view.xml',
         'views/insurance_odoo_product_map_view.xml',
+        'views/insurance_ipd_disease_view.xml',
         'views/insurance_claim.xml',
         'views/customer_view.xml',
         'report/insuree_consent_form.xml',
