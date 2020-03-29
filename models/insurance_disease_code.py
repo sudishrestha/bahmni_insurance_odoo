@@ -4,7 +4,7 @@ import json
 
 _logger = logging.getLogger(__name__)
 class insurance_disease_code(models.Model):
-    _name = 'insurance.odoo.ipd.code'
+    _name = 'insurance.disease.code'
     
     ipdCode = fields.Char(string="IPD Code", help="This field is used to code of the disease as in IPD", required=True)
     diagnosis = fields.Char(string="Diagnosis", help="This field is used to store disease", required=True)
