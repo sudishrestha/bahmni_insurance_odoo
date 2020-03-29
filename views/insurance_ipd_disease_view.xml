@@ -44,7 +44,7 @@
         </field>
     </record>
     <record id="action_insurance_ip_code_mapping" model="ir.actions.act_window">
-        <field name="name">Insurance - Odoo IPD mapping</field>
+        <field name="name">Diagnosis Code Map</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">insurance.disease.code</field>
         <field name="view_type">form</field>
@@ -53,5 +53,6 @@
     </record>
     <menuitem action="action_insurance_ip_code_mapping"
         id="menu_action_insurance_ipd_code_mapping" 
+        groups="group_insurance_claim_manager" 
         parent="bahmni_insurance_odoo.menu_insurance_config" sequence="12"/>
 </odoo>
