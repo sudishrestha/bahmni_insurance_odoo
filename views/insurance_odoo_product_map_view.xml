@@ -9,6 +9,7 @@
                 <sheet>
                     <group>
                         <field name="item_code"/>
+                        <field name="icd_code"/>
                         <field name="insurance_product"/>
                         <field name="insurance_price"/>
                         <field name="odoo_product_id"/>
@@ -28,6 +29,7 @@
         <field name="arch" type="xml">
             <tree string="Insurance Product Mapper">
                 <field name="item_code"/>
+                        <field name="icd_code"/>
                 <field name="insurance_product"/>
                 <field name="insurance_price"/>
                 <field name="odoo_product_id"/>
@@ -41,6 +43,7 @@
         <field name="arch" type="xml">
             <search string="Search Insurance Product">
                 <field name="item_code"/>
+                        <field name="icd_code"/>
                 <field name="insurance_product"/>
                 <field name="insurance_price"/>
                 <field name="odoo_product_id"/>

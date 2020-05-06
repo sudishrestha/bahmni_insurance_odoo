@@ -6,10 +6,20 @@ _logger = logging.getLogger(__name__)
 class insurance_disease_code(models.Model):
     _name = 'insurance.disease.code'
     
-    ipdCode = fields.Char(string="IPD Code", help="This field is used to code of the disease as in IPD", required=True)
+    ipdCode = fields.Char(string="ICD Code", help="This field is used to code of the disease as in IPD", required=True)
     diagnosis = fields.Char(string="Diagnosis", help="This field is used to store disease", required=True)
-    # insurance_price = fields.Float(string="Insurance Product Price", help="This field is used to store Insurance product price in Insurance System", required=True)
-    # odoo_product_id = fields.Many2one('product.product', string="Odoo Product")
-    # valid_from = fields.Datetime(string="Valid From")
-    # valid_till = fields.Datetime(string="Valid Till")
     is_active = fields.Boolean(string="Is active")    
+
+    @api.multi
+    def name_get(self):
+        result = []
+        for record in self:
+            record_name = record.ipdCode + ' - ' + record.diagnosis
+            result.append((record.id, record_name))
+        return result
+    
+    @api.model
+    def name_search(self, name, args=None, operator='ilike', limit=100):
+        args = args or []
+        recs = self.search([('diagnosis', operator, name)] + args, limit=limit)
+        return recs.name_get()
