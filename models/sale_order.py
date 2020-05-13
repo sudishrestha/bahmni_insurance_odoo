@@ -12,15 +12,32 @@ class sale_order(models.Model):
     @api.onchange('payment_type')
     def _change_payment_type(self):
         _logger.info("Inside _change_payment_type")
-        
         for sale_order in self:
             for sale_order_line in sale_order.order_line:
                 if sale_order.payment_type == 'cash' or sale_order.payment_type == 'insurance':
                     sale_order_line.update({
                         'payment_type': sale_order.payment_type
                         })
+       
+    @api.onchange("order_line")
+    def on_change_state(self):
+        cash =False
+        insurance = False
+        for sale_order in self:
+            for sale_order_line in sale_order.order_line:
+                if sale_order_line.payment_type == 'cash':
+                    cash =True
+                if sale_order_line.payment_type == 'insurance':
+                    insurance =True
+                    sale_order.update({'payment_type': 'partial'})
+        if(cash and insurance):
+            return {'value': {'payment_type': 'partial'}}
+        elif(cash):
+            return {'value': {'payment_type': 'cash'}}
+        elif(insurance):
+            return {'value': {'payment_type': 'insurance'}}
 
-          
+        
     @api.onchange('partner_id')
     def _get_nhis_number(self):
         _logger.info("Inside _get_nhis_number")
@@ -402,3 +419,14 @@ class sale_order_line(models.Model):
     _inherit = 'sale.order.line'
 
     payment_type = fields.Selection([('insurance', 'INSURANCE'), ('cash', 'CASH')], default='cash', string="Payment Type", required=True)
+   
+    # @api.onchange('payment_type')
+    # def on_change_state(self):
+    #     _logger.info("Inside order line _change_payment_type")
+    #     for record in self:
+    #         if record.payment_type:
+    #             record.payment_type = 'insurance'
+    #         else:
+    #             record.payment_type = 'cash'
+    #     sale_order.payment_type = 'insurance'
+    #     raise UserError(_('Inside order_line payment type changes'))
