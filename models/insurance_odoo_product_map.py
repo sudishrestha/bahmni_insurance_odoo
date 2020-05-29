@@ -13,6 +13,20 @@ class insurance_odoo_product_map(models.Model):
     valid_from = fields.Datetime(string="Valid From")
     valid_till = fields.Datetime(string="Valid Till")
     is_active = fields.Boolean(string="Is active")     
-    icd_code=fields.Many2one('insurance.disease.code', string="ICD Code")
+    icd_code=fields.Many2one('insurance.disease.code', string="ICD Code")    
+
+    @api.multi
+    def name_get(self):
+        result = []
+        for record in self:
+            record_name = record.item_code + ' - ' + record.insurance_product
+            result.append((record.id, record_name))
+        return result
+    
+    @api.model
+    def name_search(self, name, args=None, operator='ilike', limit=100):
+        args = args or []
+        recs = self.search([('insurance_product', operator, name)] + args, limit=limit)
+        return recs.name_get()
     
     

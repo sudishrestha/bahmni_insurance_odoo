@@ -95,7 +95,7 @@ class insurance_connect(models.TransientModel):
                 else:
                     error_msg = response["operationOutComeException"]
                 # error = "Submission Failed" % str(response["operationOutComeException"])
-                raise UserError(error_msg)
+                
         except Exception as err:
             _logger.error("\n Processing event threw error: %s", err)
             raise

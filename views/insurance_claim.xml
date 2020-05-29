@@ -92,6 +92,7 @@
                         <group>
                             <field name="claimed_date" attrs="{'readonly': [('state', 'in', ('draft','confirmed'))]}" required="1"/>
                             <field name="claim_manager_id" required="1"/>
+                        <field name="ipd_code" />  
                             <field attrs="{'invisible': [('state', 'in', ['submitted'])]}" name="claimed_received_date"/>
                         </group>
                     </group>
@@ -115,6 +116,7 @@
                                 <tree editable="bottom" string="Claim Item">
                                     <field name="product_id"/>
                                     <field name="imis_product_code" string="Imis Product Code"/>
+                                    <!-- <field name="icd_code" string ="ICD Code"/> -->
                                     <field name="product_qty"/>
                                     <field name="price_unit"/>
                                     <field name="price_total"/>

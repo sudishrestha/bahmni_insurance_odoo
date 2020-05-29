@@ -254,6 +254,7 @@ class claims(models.Model):
                 'product_uom' : imis_mapped_row.odoo_product_id.uom_id.id,
                 'imis_product' : imis_mapped_row.id,
                 'imis_product_code' : imis_mapped_row.item_code,
+                'icd_code' :imis_mapped_row.icd_code.ipdCode,
                 'price_unit' : imis_mapped_row.insurance_price,
                 'currency_id': claim_in_db.currency_id
             }
@@ -304,6 +305,7 @@ class claims(models.Model):
             'product_uom' : sale_order_line.product_uom.id,
             'imis_product' : imis_mapped_row.id,
             'imis_product_code' : imis_mapped_row.item_code,
+            'icd_code' :imis_mapped_row.icd_code.ipdCode,
             'price_unit' : imis_mapped_row.insurance_price,
             'currency_id': claim.currency_id
         }
@@ -313,6 +315,7 @@ class claims(models.Model):
     def check_visit_closed(self, visit_uuid):
         #Check visit
         #get visit details
+        return True
         response = self.env['insurance.connect']._get_visit(visit_uuid)
         if 'stopDateTime' in response:
             return True
@@ -344,15 +347,17 @@ class claims(models.Model):
         _logger.info("Inside action_view_eligibility")
         if self.nhis_number:
             partner_id = self.partner_id
-            params = self.env['insurance.eligibility'].get_insurance_details(partner_id)
-            ins_elg_obj = self.env['insurance.eligibility'].create(params)
+            #params = self.env['insurance.eligibility'].get_insurance_details(partner_id)
+            elig_response = self.env['insurance.eligibility'].get_insurance_details(partner_id)
+
+            # ins_elg_obj = self.env['insurance.eligibility'].create(params)
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Eligibility Check',
                 'res_model': 'insurance.eligibility',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'res_id': ins_elg_obj.id,
+                'res_id': elig_response.id,
                 'view_id': self.env.ref('bahmni_insurance_odoo.insurance_eligibility_check_result_view', False).id,
                 'target': 'new',
             }
@@ -366,19 +371,20 @@ class claims(models.Model):
             Confirm claim for submission
         ''' 
         _logger.debug("action_confirm")
-        
         #check if state is draft or rejected
         for claim in self:
             _logger.debug(claim)
-            
             # if self._check_if_eligible(claim) == False:
             #      raise UserError("Claim can't be processed. Claimed amount greater than eligible amount.")
             
             if self.check_visit_closed(claim.external_visit_uuid) == False:
                 raise UserError("The current visit has not been closed. So can't be confirmed now.")
             
+            
+            # raise UserError("Action CUt")
             if claim.state in ('draft', 'rejected'):
                 #Check if amount claimed is in the range of eligibility
+                
                 claim.update({
                     'state': 'confirmed'
                 })
@@ -461,29 +467,39 @@ class claims(models.Model):
                         "item": []
                     }
                     
-                    #Prepare Claim line item
-                    sequence = 1
-                    for claim_line in claim.insurance_claim_line:
-                        if claim_line.imis_product_code :
-                            claim_line.update({
-                                'claim_sequence': sequence
-                            })
-                            
-                            if claim_line.product_id.product_tmpl_id.type.lower() == 'service':
-                                category = 'service'
-                            else:
-                                category = 'item'
-                            
-                            claim_request['item'].append({
-                                "category": category,
-                                "quantity": claim_line.product_qty,
-                                "sequence": sequence,
-                                "code": claim_line.imis_product_code,
-                                "unitPrice": claim_line.price_unit
-                            })
-                            sequence += 1
-                
+
+                    if  claim.ipd_code:
+                        claim_request['item'].append({
+                                    "category": "item",
+                                    "quantity": 1,
+                                    "sequence": 1,
+                                    "code": claim.ipd_code.insurance_product,
+                                    "unitPrice": claim.ipd_code.insurance_price
+                                })
+                    else:
+                        #Prepare Claim line item
+                        sequence = 1
+                        for claim_line in claim.insurance_claim_line:
+                            if claim_line.imis_product_code :
+                                claim_line.update({
+                                    'claim_sequence': sequence
+                                })
+                                
+                                if claim_line.product_id.product_tmpl_id.type.lower() == 'service':
+                                    category = 'service'
+                                else:
+                                    category = 'item'
+                                
+                                claim_request['item'].append({
+                                    "category": category,
+                                    "quantity": claim_line.product_qty,
+                                    "sequence": sequence,
+                                    "code": claim_line.imis_product_code,
+                                    "unitPrice": claim_line.price_unit
+                                })
+                                sequence += 1
                     _logger.debug(claim_request)
+                    # raise UserError(claim_request)
             # Submit Claim for Processing
             response = self.env['insurance.connect']._submit_claims(claim_request)
             if response:
@@ -540,6 +556,7 @@ class claims(models.Model):
     currency_id = fields.Many2one(related='sale_orders.currency_id', string="Currency", readonly=True, required=True)
     insurance_claim_history = fields.One2many('insurance.claim.history', 'claim_id', string='Claim Lines', states={'confirmed': [('readonly', True)], 'submitted': [('readonly', True)], 'rejected': [('readonly', True)]}, copy=True)
     external_visit_uuid = fields.Char(string="External Visit Id", help="This field is used to store visit id of patient")
+    ipd_code = fields.Many2one('insurance.odoo.product.map', string='IPD Package' )
     
     
 class claims_line(models.Model):
@@ -550,7 +567,7 @@ class claims_line(models.Model):
     def _get_imis_product_code(self):
         _logger.info("Inside _get_imis_product_code")
         product_id = self.product_id.id
-        insurance_product_mapper = self.env['insurance.odoo.product.map'].search([('odoo_product_id' , '=', product_id), ('is_active', '=', 't')])
+        insurance_product_mapper = self.env['insurance.odoo.product.map'].search([('odoo_product_id' , '=', product_id), ('is_active', '=', 'True')])
         _logger.info(insurance_product_mapper)
         if insurance_product_mapper:
             self.imis_product = insurance_product_mapper
@@ -574,12 +591,16 @@ class claims_line(models.Model):
         """
         _logger.info("Inside _amount_all")
         self.price_total = self.price_unit * self.product_qty
+
+    
+
         
     claim_id = fields.Many2one('insurance.claim', string='Claim ID', required=True, ondelete='cascade', index=True, copy=False)
     claim_manager_id = fields.Many2one(related='claim_id.claim_manager_id', store=True, string='Claims Manager', readonly=True)
     claim_partner_id = fields.Many2one(related='claim_id.partner_id', store=True, string='Customer')
     product_id = fields.Many2one('product.product', string='Product', domain=[('sale_ok', '=', True)], change_default=True, ondelete='restrict', required=True)
     imis_product = fields.Many2one('insurance.odoo.product.map', string='Insurance Item', change_default=True, required=True)
+    icd_code = fields.Char( string='ICD CODE')
     imis_product_code = fields.Char(string='Product', change_default=True, required=True)
     product_qty = fields.Float(string='Quantity', required=True, default=1.0)
     product_uom = fields.Many2one('product.uom', string='Unit of Measure', required=True)
